@@ -124,3 +124,78 @@
 - run ~/bandit20-do cat /etc/bandit\_pass/bandit20
    - because you are "effectively" running as bandit20, you can read it to get the password
 -bandit20 password: 0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO
+
+### Level 20 -> Level 21
+- confused by how to start so I looked up how to get started: https://mayadevbe.me/posts/overthewire/bandit/level21/
+- basically suconnect works by connecting to a port that you specify and then compares whatever it finds at the port to the bandit 20 password, if it mathces it'll send back the password for bandit21. 
+- in order to have text at a port that it can compare with you need to use nc
+- first: echo [bandit20 password] | nc -l -p [random port] & 
+    - the & is to background the process
+    - echo "0qXahG8ZjOVMN9Ghs7iOWsCfZyXOUbYO" | nc -l -p 57628 &
+- next: ./suconnect [random port]
+    - ./suconnect 57628
+- bandit21 password: EeoULMCra2q0dSkYj561DX7s1CpBuOBt
+
+### Level 21 -> Level 22
+- very confused about how to do this one at first. Had to look it up: https://mayadevbe.me/posts/overthewire/bandit/level22/ 
+- cd /etc/cron.d: this is where the cron jobs are located
+- look in cronjob\_bandit22: this shows you the commands being run by cron
+    - cat cronjob\_bandit22
+- the command that's run regularly (every minute each day) is /usr/bin/cronjob\_22.sh
+- if you look inside that file you notice that /etc/bandit\_pass/bandit22 cats its password to a tmp file
+- next just read that tmp file to find the password
+    cat /tmp/t7O6lds9S0RqQh9aMcz6ShpAoZKF7fgv
+- bandit22 password: tRae0UfB9v0UzbCdn9cY0gQnds9GF58Q
+
+### Level 22 -> Level 23
+- similar kind of deal:
+- cat /etc/cron.d/cronjob\_bandit23: in this case i went straight to the next step becaause i assumed the command was the same and it was
+- cat /usr/bin/cronjob\_bandit23.sh
+- you'll notice that it's creating a hash of the phrase "I am user bandit23" and using that as the tmp file
+    - don't do bandit22 (even though you see the whoami command) because you're trying to get bandit23's password
+- and of course it's echoing the password into that tmp file so
+- cat /tmp/8ca319486bfbbc3663ea0fbe81326349
+- bandit23 password: 0Zf11ioIjMVN551jX3CmStKLYqjk54Ga
+
+### Level 23 -> Level 24
+- another one I had to look up after writing about 15 scripts that weren't getting me anywhere. turns out i jsut needed a temporary folder 
+- similar kind of deal:
+- cat /etc/cron.d/cronjob\_bandit24: in this case i went straight to the next step becaause i assumed the command was the same and it was
+- cat /usr/bin/cronjob\_bandit24.sh
+- ok so for this one we have to make a script that allows us to retrieve the password
+- basically cronjob\_bandit24.sh loops through all the files in /var/spool/bandit24/foo. if they are owned by bandit23 it runs them with a timeout.
+    - timeout -s 9 60: timeout for 60 seconds then kill with 9 as signal (kill -9)
+- now how to get it to print the password you ask..
+    - tried several versions and I had the right idea but I was creating the files in the wrong place. I should have been working in a temporary directory to create both the script and the file to store the password. 
+    - I think my file was being deleted before it got to run or was run before i was done and then deleted after
+- anyway, the following steps worked so far:
+    - mktemp -d
+    - cd [temp dir]
+    - vi password
+    - vi get\_pass.sh
+         #! /bin/bash
+         cat /etc/bandit\_pass/bandit24 > /tmp/[tmp dir]/password
+        - very simple script 
+    - chmod 777 /tmp/[tmp dir]
+    - chmod 777 /tmp/[tmp dir]/*
+    - cp get\_pass.sh /var/spool/bandit24/foo
+    - vi password (after about a minute)
+- bandit24 password: gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8
+
+### Level 24 -> Level 25
+- this one requires us to brute force a secret code to a daemon listening on port 30002
+- at first i tried to run nc in a script and then feed in the responds then but i didn't account for the fact that it would wait for nc to run before running the for loop
+- making a file with all the possibilities you want to try first and then catting that into nc is the way to go
+- mktemp -d
+- cd [temp dir]
+- vi guess.sh
+    #! /bin/bash
+    for i in {0000..9999}; do
+        echo gb8KRRCsshuZXI0tUuR6ypOFjiZbf3G8 $i
+    done
+- chmod 700 guess.sh
+- ./guess.sh > possibilities.txt
+- cat possibilities.txt | nc localhost 30002 > results.txt
+- cat results.txt | grep -v Wrong!: finds the code by filtering out all the wrong
+- bandit25 password: iCi86ttT4KSNe1armKiwbQNmB3YJP3q4
+- pin was 9297 (apparently)
