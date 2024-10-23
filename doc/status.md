@@ -1,9 +1,9 @@
-## Monday, October 13
+## Monday, October 14
 
 ### What’s Already Working
 
 * Created three working vulnerability scans  
-  * The first scan, “cron-scan.sh,” checks to see if there are writable cron jobs run by root on the system. In our case, Additionally, these scans are functional on our personal systems.   
+  * The first scan, “cron-scan.sh,” checks to see if there are writable cron jobs run by root on the system. In our case, these scans are functional on our personal systems.
   * Our next scan, path-scan.sh, checks if there are any writable directories in the PATH variable. If there are, it adds them to a list called writable-dirs for later exploitation.  
   * Our final scan, pkexec-scan.sh, scans for the pkexec binary on a machine. If it finds it, it checks if the current user has sudo access. If so it sets the PKEXEC flag to 1 to notify the program that it can use pkexec for further exploits.  
 * A “main.sh” file that runs each scan successfully.  
